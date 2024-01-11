@@ -37,7 +37,7 @@ func main() {
 	r.HandleFunc("/", HelloWorld)
 	r.HandleFunc("/tasks", GetTasks).Methods("GET")
 	r.HandleFunc("/tasks", CreateTask).Methods("POST")
-	r.HandleFunc("/tasks", DeleteTask).Methods("DELETE")
+	r.HandleFunc("/tasks/{id}", DeleteTask).Methods("DELETE")
 
 	http.Handle("/", r)
 	fmt.Println("Server is running on port 8080")
@@ -45,21 +45,19 @@ func main() {
 }
 
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
-	//# Get data from request body and decode it to Task struct
-	var task Task
-	err := json.NewDecoder(r.Body).Decode(&task)
-	if err != nil {
-		fmt.Println(err)
-	}
+	//# Get id from request
+	params := mux.Vars(r)
+	id := params["id"]
 
-	//# Delete task from tasks slice
-	for index, item := range tasks {
-		if item.ID == task.ID {
+	//# Loop through tasks slice and delete task with id
+	for index, task := range tasks {
+		if task.ID == id {
 			tasks = append(tasks[:index], tasks[index+1:]...)
+			w.WriteHeader(http.StatusOK) //# Set status code to 200
 			break
 		}
 	}
-	json.NewEncoder(w).Encode(tasks)
+	w.WriteHeader(http.StatusNotFound) //# Set status code to 404
 }
 
 func CreateTask(w http.ResponseWriter, r *http.Request) {
