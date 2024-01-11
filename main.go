@@ -33,19 +33,34 @@ var tasks []Task = []Task{
 func main() {
 	r := mux.NewRouter() //? Create a new router, some mux router
 
-	r.HandleFunc("/", HelloWorld) //? adress request to the func
+	//# Our routes
+	r.HandleFunc("/", HelloWorld)
 	r.HandleFunc("/tasks", GetTasks).Methods("GET")
+	r.HandleFunc("/tasks", CreateTask).Methods("POST")
 	
 	http.Handle("/", r)
 	fmt.Println("Server is running on port 8080")
 	http.ListenAndServe(":8080", r)
 }
 
-func HelloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
+func CreateTask(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var task Task
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	tasks = append(tasks, task)
+	json.NewEncoder(w).Encode(task)
 }
 
 func GetTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")	
 	json.NewEncoder(w).Encode(tasks)
+}
+
+func HelloWorld(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello World"))
 }
