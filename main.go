@@ -46,12 +46,14 @@ func main() {
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	//# Get data from request body and decode it to Task struct
 	var task Task
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	//# Append new task to tasks slice
 	tasks = append(tasks, task)
 	json.NewEncoder(w).Encode(task)
 }
