@@ -17,15 +17,15 @@ type Task struct {
 
 var tasks []Task = []Task{
 	{
-		ID: 		"1",
-		Title: 		"Task 1",
-		Status: 	true,
+		ID:          "1",
+		Title:       "Task 1",
+		Status:      true,
 		Description: "This is task 1",
 	},
 	{
-		ID: 		"2",
-		Title: 		"Task 2",
-		Status: 	false,
+		ID:          "2",
+		Title:       "Task 2",
+		Status:      false,
 		Description: "This is task 2",
 	},
 }
@@ -37,10 +37,29 @@ func main() {
 	r.HandleFunc("/", HelloWorld)
 	r.HandleFunc("/tasks", GetTasks).Methods("GET")
 	r.HandleFunc("/tasks", CreateTask).Methods("POST")
-	
+	r.HandleFunc("/tasks", DeleteTask).Methods("DELETE")
+
 	http.Handle("/", r)
 	fmt.Println("Server is running on port 8080")
 	http.ListenAndServe(":8080", r)
+}
+
+func DeleteTask(w http.ResponseWriter, r *http.Request) {
+	//# Get data from request body and decode it to Task struct
+	var task Task
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	//# Delete task from tasks slice
+	for index, item := range tasks {
+		if item.ID == task.ID {
+			tasks = append(tasks[:index], tasks[index+1:]...)
+			break
+		}
+	}
+	json.NewEncoder(w).Encode(tasks)
 }
 
 func CreateTask(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +78,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTasks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")	
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
 }
 
