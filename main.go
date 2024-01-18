@@ -13,6 +13,7 @@ type Task struct {
 	Title       string `json:"title"`
 	Status      bool   `json:"status"`
 	Description string `json:"description"`
+	User        string `json:"user"`
 }
 
 var tasks []Task = []Task{
@@ -21,12 +22,14 @@ var tasks []Task = []Task{
 		Title:       "Task 1",
 		Status:      true,
 		Description: "This is task 1",
+		User:        "Denis",
 	},
 	{
 		ID:          "2",
 		Title:       "Task 2",
 		Status:      false,
 		Description: "This is task 2",
+		User:        "Mirek",
 	},
 }
 
@@ -38,6 +41,9 @@ func main() {
 	r.HandleFunc("/tasks", GetTasks).Methods("GET")
 	r.HandleFunc("/tasks", CreateTask).Methods("POST")
 	r.HandleFunc("/tasks/{id}", DeleteTask).Methods("DELETE")
+	r.HandleFunc("/tasks/{id}", GetTask).Methods("GET")
+
+	r.HandleFunc("/users/{id}/tasks", GetUserTasks).Methods("GET")
 
 	http.Handle("/", r)
 	fmt.Println("Server is running on port 8080")
@@ -70,9 +76,51 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
+	//# Validate data
+	if task.Title == "" || task.Description == "" || task.User == "" || task.ID == "" {
+		w.WriteHeader(http.StatusBadRequest) //# Set status code to 400
+		w.Write([]byte("Missing data"))
+		return
+	}
+
 	//# Append new task to tasks slice
 	tasks = append(tasks, task)
 	json.NewEncoder(w).Encode(task)
+}
+
+func GetTask(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	//# Get id from request
+	params := mux.Vars(r)
+	id := params["id"]
+
+	//# Loop through tasks slice and return task with id
+	for _, task := range tasks {
+		if task.ID == id {
+			json.NewEncoder(w).Encode(task)
+			break
+		}
+	}
+	w.WriteHeader(http.StatusNotFound) //# Set status code to 404
+}
+
+func GetUserTasks(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	//# Get id from request
+	params := mux.Vars(r)
+	id := params["id"]
+
+	//# Loop through tasks slice and return tasks with user id
+	var userTasks []Task
+	for _, task := range tasks {
+		if task.User == id {
+			userTasks = append(userTasks, task)
+		}
+	}
+
+	json.NewEncoder(w).Encode(userTasks)
 }
 
 func GetTasks(w http.ResponseWriter, r *http.Request) {
